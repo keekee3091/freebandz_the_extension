@@ -1,11 +1,24 @@
+const openai = require('openai');
+const fetch = require('node-fetch');
+import 'dotenv/config'
+
+const openaiApiKey = process.env.OPENAI_KEY
+const openaiClient = new openai.OpenAIApi(openaiApiKey);
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'startTranscription') {
         const audioURL = message.audioURL;
 
         downloadAudio(audioURL)
             .then(audioData => {
-                const transcription = transcribeAudio(audioData);
-                sendResponse({ transcription: transcription });
+                transcribeAudio(audioData)
+                    .then(transcription => {
+                        sendResponse({ transcription: transcription });
+                    })
+                    .catch(error => {
+                        console.error('Error transcribing audio:', error);
+                        sendResponse({ error: 'Error transcribing audio' });
+                    });
             })
             .catch(error => {
                 console.error('Error downloading audio:', error);
@@ -25,7 +38,15 @@ async function downloadAudio(url) {
     }
 }
 
-function transcribeAudio(audioData) {
-    const results = model.stt(audioData);
-    return results;
+async function transcribeAudio(audioData) {
+    try {
+        const response = await openaiClient.speechToText({
+            audio: audioData,
+            model: 'davinci',
+            contentType: 'audio/wav'
+        });
+        return response.data.text;
+    } catch (error) {
+        throw new Error('Failed to transcribe audio');
+    }
 }

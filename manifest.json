@@ -3,7 +3,9 @@
     "name": "Freebandz",
     "version": "1.0",
     "description": "A browser extension for transcribing videos verbatim.",
-    "permissions": ["activeTab"],
+    "permissions": [
+      "activeTab",
+      "https://api.openai.com/*"],
     "content_scripts": [
       {
         "matches": ["<all_urls>"],

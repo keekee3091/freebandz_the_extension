@@ -1,26 +1,16 @@
-const videoLink = document.querySelector('a[href*="wvideo"]');
+const videoScript = document.querySelector('head script[type="application/ld+json"]');
 
-if (videoLink) {
-    const videoURL = videoLink.getAttribute('href');
+if (videoScript) {
+    const videoData = JSON.parse(videoScript.textContent);
+    
+    if (videoData && videoData['@context'] && videoData['@type'] && videoData['potentialAction'] && videoData['potentialAction']['target']) {
+        const videoURL = videoData['potentialAction']['target'];
+        console.log('Video URL:', videoURL);
 
-    fetch(videoURL)
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const videoElement = doc.querySelector('video');
-
-            if (videoElement) {
-                console.log('Video element found', videoElement);
-
-                chrome.runtime.sendMessage({ action: 'startTranscription', audioURL: videoURL });
-            } else {
-                console.log('Video element not found', videoURL);
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching video page', error);
-        });
+        chrome.runtime.sendMessage({ action: 'startTranscription', audioURL: videoURL });
+    } else {
+        console.log('Invalid or missing video script data');
+    }
 } else {
-    console.log('Video link not found');
+    console.log('Video script element not found');
 }
