@@ -2,7 +2,7 @@ const openai = require('openai');
 const fetch = require('node-fetch');
 import 'dotenv/config'
 
-const openaiApiKey = process.env.OPENAI_KEY
+const openaiApiKey = "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"
 const openaiClient = new openai.OpenAIApi(openaiApiKey);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
