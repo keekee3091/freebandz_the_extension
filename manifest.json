@@ -4,8 +4,10 @@
     "version": "1.0",
     "description": "A browser extension for transcribing videos verbatim.",
     "permissions": [
-      "activeTab",
-      "https://api.openai.com/*"],
+      "activeTab"],
+    "host_permissions": [
+      "https://.openai.com/*"
+    ],
     "content_scripts": [
       {
         "matches": ["<all_urls>"],

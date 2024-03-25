@@ -1,29 +1,17 @@
-const openai = require('openai');
-const fetch = require('node-fetch');
-import 'dotenv/config'
+const openaiApiKey = "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";
 
-const openaiApiKey = process.env.OPENAI_KEY
-const openaiClient = new openai.OpenAIApi(openaiApiKey);
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action === 'startTranscription') {
         const audioURL = message.audioURL;
 
-        downloadAudio(audioURL)
-            .then(audioData => {
-                transcribeAudio(audioData)
-                    .then(transcription => {
-                        sendResponse({ transcription: transcription });
-                    })
-                    .catch(error => {
-                        console.error('Error transcribing audio:', error);
-                        sendResponse({ error: 'Error transcribing audio' });
-                    });
-            })
-            .catch(error => {
-                console.error('Error downloading audio:', error);
-                sendResponse({ error: 'Error downloading audio' });
-            });
+        try {
+            const audioData = await downloadAudio(audioURL);
+            const transcription = await transcribeAudio(audioData);
+            sendResponse({ transcription: transcription });
+        } catch (error) {
+            console.error('Error:', error);
+            sendResponse({ error: error.message });
+        }
 
         return true;
     }
@@ -39,14 +27,21 @@ async function downloadAudio(url) {
 }
 
 async function transcribeAudio(audioData) {
-    try {
-        const response = await openaiClient.speechToText({
-            audio: audioData,
-            model: 'davinci',
-            contentType: 'audio/wav'
-        });
-        return response.data.text;
-    } catch (error) {
+    const formData = new FormData();
+    formData.append('audio', new Blob([audioData]), 'audio.wav');
+
+    const response = await fetch('https://api.openai.com/v1/speech-to-text', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: formData
+    });
+
+    if (!response.ok) {
         throw new Error('Failed to transcribe audio');
     }
+
+    const data = await response.json();
+    return data.text;
 }
